@@ -220,6 +220,12 @@
   animation: sos-pulse 1.8s ease-in-out infinite;
 }
 
+/* User location pulse */
+@keyframes user-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(2.2); opacity: 0; }
+}
+
 /* Floating elements */
 @layer utilities {
   input[type="search"]::-webkit-search-cancel-button {

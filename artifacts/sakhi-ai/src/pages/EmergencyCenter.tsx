@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import {
   Phone,
   Shield,
@@ -6,10 +7,11 @@ import {
   PhoneCall,
   Plus,
   Trash2,
-  ChevronRight,
   Siren,
   Hospital,
   HeartPulse,
+  MapPin,
+  Loader2,
 } from "lucide-react";
 
 const emergencyContacts = [
@@ -27,12 +29,21 @@ const personalContacts = [
 ];
 
 export default function EmergencyCenter() {
+  const geo = useGeolocation(true);
   const [sosActive, setSosActive] = useState(false);
+  const [sosSent, setSosSent] = useState(false);
   const [sosCountdown, setSosCountdown] = useState(0);
   const [contacts, setContacts] = useState(personalContacts);
 
+  const locationText = geo.position
+    ? geo.permissionDenied
+      ? "New Delhi, India (Default)"
+      : `${geo.position[0].toFixed(5)}°N, ${geo.position[1].toFixed(5)}°E`
+    : "Locating...";
+
   const triggerSOS = () => {
     setSosActive(true);
+    setSosSent(false);
     let count = 3;
     setSosCountdown(count);
     const timer = setInterval(() => {
@@ -41,6 +52,8 @@ export default function EmergencyCenter() {
       if (count <= 0) {
         clearInterval(timer);
         setSosActive(false);
+        setSosSent(true);
+        setTimeout(() => setSosSent(false), 6000);
       }
     }, 1000);
   };
@@ -68,31 +81,56 @@ export default function EmergencyCenter() {
               text-white font-black text-xl shadow-2xl transition-all duration-200
               ${sosActive
                 ? "bg-red-800 cursor-not-allowed scale-95"
+                : sosSent
+                ? "bg-emerald-600 hover:bg-emerald-700 active:scale-95"
                 : "bg-red-600 hover:bg-red-700 active:scale-95 sos-pulse"
               }
             `}
           >
             {sosActive ? (
               <>
-                <AlertCircle className="w-10 h-10 mb-1" />
+                <Loader2 className="w-10 h-10 mb-1 animate-spin" />
                 <span className="text-4xl font-black">{sosCountdown}</span>
                 <span className="text-[12px] font-semibold mt-0.5 opacity-80">Sending...</span>
+              </>
+            ) : sosSent ? (
+              <>
+                <AlertCircle className="w-10 h-10 mb-1" />
+                <span className="text-[18px] font-black leading-none">SENT!</span>
+                <span className="text-[11px] font-semibold mt-1 opacity-80">Help coming</span>
               </>
             ) : (
               <>
                 <Phone className="w-10 h-10 mb-1" />
                 <span className="text-[28px] font-black leading-none">SOS</span>
-                <span className="text-[11px] font-semibold mt-1 opacity-80">Hold to Activate</span>
+                <span className="text-[11px] font-semibold mt-1 opacity-80">Tap to Activate</span>
               </>
             )}
           </button>
+
+          {/* Location display */}
+          <div className="mt-4 flex items-center gap-2 bg-muted/50 rounded-xl px-4 py-2.5 text-[12px]">
+            {geo.loading ? (
+              <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+            ) : (
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+            )}
+            <span className="text-muted-foreground">Location: </span>
+            <span className="font-medium text-foreground">{locationText}</span>
+          </div>
+
           {sosActive && (
-            <div className="mt-5 text-[13px] font-semibold text-red-600 animate-pulse">
-              🚨 Sending emergency alert to your contacts...
+            <div className="mt-3 text-[13px] font-semibold text-red-600 animate-pulse flex items-center gap-2">
+              🚨 Sending alert to {contacts.length} contact(s)...
             </div>
           )}
-          <p className="text-[11px] text-muted-foreground mt-4 text-center max-w-[240px]">
-            This will immediately notify your emergency contacts and share your location
+          {sosSent && (
+            <div className="mt-3 text-[13px] font-semibold text-emerald-600 flex items-center gap-2">
+              ✅ SOS sent to Mom, Priya & Women Helpline 1091
+            </div>
+          )}
+          <p className="text-[11px] text-muted-foreground mt-3 text-center max-w-[240px]">
+            Immediately notifies your emergency contacts with your live location
           </p>
         </div>
 
