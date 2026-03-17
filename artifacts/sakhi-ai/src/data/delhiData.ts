@@ -1,4 +1,13 @@
 export type PlaceType = "hospital" | "police" | "metro" | "landmark" | "pharmacy";
+export type LayerType = "lighting" | "safe-zones" | "transport" | "harassment" | "crime";
+
+export interface LayerMarker {
+  id: string;
+  pos: [number, number];
+  label: string;
+  description: string;
+  layer: LayerType;
+}
 
 export interface SafePlace {
   name: string;
