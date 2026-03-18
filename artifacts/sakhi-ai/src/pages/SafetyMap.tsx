@@ -21,7 +21,7 @@ export default function SafetyMap() {
 
   return (
     <div className="relative w-full h-full">
-      <MapView className="absolute inset-0 w-full h-full" zoom={12} showMarkers={true} />
+      <MapView className="absolute inset-0 w-full h-full" zoom={12} showSafePlaces={true} showDangerZones={true} showMarkers={true} />
 
       {/* Header */}
       <div className="absolute top-4 left-4 z-10 bg-card/95 backdrop-blur-sm rounded-2xl px-4 py-3 shadow-md border border-border">

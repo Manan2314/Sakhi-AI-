@@ -127,10 +127,8 @@ export default function MapView({
     L.control.attribution({ position: "bottomleft", prefix: "© OpenStreetMap" }).addTo(map);
 
     const placesToShow = showPoliceOnly
-      ? DELHI_SAFE_PLACES.filter((p) => p.type === "police")
-      : showSafePlaces
-      ? DELHI_SAFE_PLACES
-      : [];
+    ? DELHI_SAFE_PLACES.filter((p) => p.type === "police")
+    : DELHI_SAFE_PLACES;
 
     placesToShow.forEach((loc) => {
       const color = PLACE_COLORS[loc.type] ?? "#6b7280";
