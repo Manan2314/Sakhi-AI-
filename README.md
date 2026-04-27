@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Sakhi AI — Safety Intelligence for a Secure Tomorrow 🛡️✨
 
 > **"Safety shouldn't be a privilege. It should be an intelligence."**
@@ -136,3 +137,6 @@ Sakhi AI is more than a project; it’s a commitment to making our cities walkab
 ---
 
 > **Sakhi AI: Your Companion in Every Step.** 🌙🛡️
+=======
+# Sakhi-AI-
+>>>>>>> d0cdab01982ed9d5b91b99f4dee9445d7579a203
