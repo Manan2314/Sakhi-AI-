@@ -1,4 +1,4 @@
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${BASE_URL}${endpoint}`;
@@ -42,6 +42,11 @@ export const endpoints = {
   
   getSafePlaces: (lat: number, lng: number, radius = 2.0) => 
     `/safe-places?lat=${lat}&lng=${lng}&radius=${radius}`,
+    
+  getAreaInsights: (lat: number, lng: number, radius = 2.0) => 
+    `/area-insights?lat=${lat}&lng=${lng}&radius=${radius}`,
+    
+  extractPreferences: "/extract-preferences",
   
   triggerUnsafe: "/trigger-unsafe",
 

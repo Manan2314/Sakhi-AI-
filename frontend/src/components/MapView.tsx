@@ -16,6 +16,17 @@ export interface RoutePoint {
   risk_level: string;
 }
 
+export interface RouteData {
+  type: "shortest" | "safest";
+  route_type: "shortest" | "safest";
+  coordinates: [number, number][];
+  distance: number;
+  duration: number;
+  average_score?: number;
+  worst_score?: number;
+  unsafe_segments?: { lat: number; lng: number; score: number; incident_types: string[] }[];
+}
+
 export interface SafePlaceMarker {
   id: string;
   pos: [number, number];
@@ -29,8 +40,11 @@ interface MapViewProps {
   className?: string;
   userLocation?: [number, number] | null;
   routePoints?: RoutePoint[] | null;
+  routes?: RouteData[] | null;
   reportMarkers?: ReportMarker[];
   safePlaceMarkers?: SafePlaceMarker[];
+  showSafePlaces?: boolean;
+  showDangerZones?: boolean;
   onMapClick?: (latlng: [number, number]) => void;
   fitToRoute?: boolean;
 }
@@ -86,6 +100,7 @@ export default function MapView({
   className = "",
   userLocation = null,
   routePoints = null,
+  routes = null,
   reportMarkers = [],
   safePlaceMarkers = [],
   onMapClick,
@@ -97,6 +112,7 @@ export default function MapView({
   const routeLayerRef = useRef<L.LayerGroup | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const safePlacesLayerRef = useRef<L.LayerGroup | null>(null);
+  const unsafeZonesLayerRef = useRef<L.LayerGroup | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -120,6 +136,7 @@ export default function MapView({
     routeLayerRef.current = L.layerGroup().addTo(map);
     markersLayerRef.current = L.layerGroup().addTo(map);
     safePlacesLayerRef.current = L.layerGroup().addTo(map);
+    unsafeZonesLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
     return () => {
@@ -169,20 +186,60 @@ export default function MapView({
     });
   }, [safePlaceMarkers]);
 
-  // Sync route with risk segments
+  // Sync route with risk segments OR multiple routes
   useEffect(() => {
     const layer = routeLayerRef.current;
     const map = mapRef.current;
     if (!layer || !map) return;
     layer.clearLayers();
 
-    if (routePoints && routePoints.length >= 2) {
+    if (routes && routes.length > 0) {
+      // Sort routes so safest is drawn first (at the bottom), and shortest on top (second)
+      const sortedRoutes = [...routes].sort((a, b) => {
+        if (a.type === "safest") return -1;
+        if (b.type === "safest") return 1;
+        return 0;
+      });
+
+      sortedRoutes.forEach((route) => {
+        if (!route.coordinates || route.coordinates.length < 2) return;
+        const isSafest = route.type === "safest";
+        const color = isSafest ? "#22c55e" : "#ef4444";
+        const weight = isSafest ? 6 : 4.5;
+        const opacity = isSafest ? 0.95 : 0.8;
+        const dashArray = isSafest ? undefined : "6, 10";
+
+        L.polyline(route.coordinates, {
+          color,
+          weight,
+          opacity,
+          dashArray,
+          lineCap: "round",
+          lineJoin: "round"
+        }).addTo(layer);
+      });
+
+      // Add Start/End icons for the routes
+      const primaryRoute = routes.find(r => r.type === "safest") || routes[0];
+      if (primaryRoute && primaryRoute.coordinates && primaryRoute.coordinates.length >= 2) {
+        const start = primaryRoute.coordinates[0];
+        const end = primaryRoute.coordinates[primaryRoute.coordinates.length - 1];
+
+        L.circleMarker(start, { radius: 6, color: "#22c55e", fillOpacity: 1 }).addTo(layer);
+        L.marker(end, { icon: makePinIcon("#ec4899", 32) }).addTo(layer).bindPopup("Destination");
+
+        if (fitToRoute) {
+          const allCoords = routes.flatMap(r => r.coordinates);
+          if (allCoords.length > 0) {
+            const bounds = L.latLngBounds(allCoords);
+            map.fitBounds(bounds, { padding: [50, 50] });
+          }
+        }
+      }
+    } else if (routePoints && routePoints.length >= 2) {
       routePoints.forEach((p, i) => {
         if (i === 0) return;
         const prev = routePoints[i - 1];
-        
-        // Color based on the target point's score
-        // Score: 80+ Safe (green), 50+ Moderate (yellow/orange), <50 Unsafe (red)
         const color = p.score >= 80 ? "#22c55e" : p.score >= 50 ? "#f59e0b" : "#ef4444";
         
         L.polyline([prev.pos, p.pos], { 
@@ -194,7 +251,6 @@ export default function MapView({
         }).addTo(layer);
       });
 
-      // Add Start/End icons
       const start = routePoints[0].pos;
       const end = routePoints[routePoints.length - 1].pos;
       
@@ -206,7 +262,58 @@ export default function MapView({
         map.fitBounds(bounds, { padding: [50, 50] });
       }
     }
-  }, [routePoints, fitToRoute]);
+  }, [routes, routePoints, fitToRoute]);
+
+  // Sync unsafe zones from routes
+  useEffect(() => {
+    const layer = unsafeZonesLayerRef.current;
+    if (!layer) return;
+    layer.clearLayers();
+
+    if (routes && routes.length > 0) {
+      const uniqueZones: { [key: string]: { lat: number; lng: number; score: number; incident_types: string[] } } = {};
+      
+      routes.forEach((route) => {
+        if (!route.unsafe_segments) return;
+        route.unsafe_segments.forEach((zone) => {
+          const key = `${zone.lat.toFixed(5)},${zone.lng.toFixed(5)}`;
+          if (!uniqueZones[key] || uniqueZones[key].score > zone.score) {
+            uniqueZones[key] = zone;
+          }
+        });
+      });
+
+      Object.values(uniqueZones).forEach((zone) => {
+        // Outer glow
+        L.circle([zone.lat, zone.lng], {
+          radius: 350,
+          color: "transparent",
+          fillColor: "#ef4444",
+          fillOpacity: 0.1,
+          weight: 0
+        }).addTo(layer);
+
+        // Inner circle
+        L.circle([zone.lat, zone.lng], {
+          radius: 150, // 150m radius
+          color: "#ef4444",
+          fillColor: "#ef4444",
+          fillOpacity: 0.25,
+          weight: 2,
+          dashArray: "6, 6"
+        })
+        .addTo(layer)
+        .bindPopup(`
+          <div style="font-family: sans-serif; font-size: 11px; padding: 2px;">
+            <strong style="color: #dc2626; display: flex; align-items: center; gap: 4px;">⚠️ Unsafe Zone (${zone.score}/100)</strong>
+            <div style="margin-top: 4px; color: #4b5563;">
+              Risks: <strong style="color: #1f2937;">${zone.incident_types.join(", ")}</strong>
+            </div>
+          </div>
+        `);
+      });
+    }
+  }, [routes]);
 
   return <div ref={containerRef} className={`leaflet-container ${className}`} />;
 }

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Sakhi AI — Safety Intelligence for a Secure Tomorrow 🛡️✨
 
 > **"Safety shouldn't be a privilege. It should be an intelligence."**
@@ -21,6 +20,15 @@ Women’s safety remains a critical challenge, yet most existing solutions are e
 
 ---
 
+## 🚀 Latest Updates (Delhi Intelligence & Realism Sprint)
+Sakhi AI has been optimized into a showcase-ready platform highlighting hyper-realistic urban safety data in Delhi:
+- **Rich Dataset Realism**: The backend dynamically generates believable "micro-clusters" (hotspots) representing real-world urban dangers—nightlife harassment zones, isolated metro exits, and poorly lit residential stretches—while intelligently placing Safe Places like 24/7 pharmacies.
+- **Differentiated Route Intelligence**: Thanks to dense hazard clustering, our scoring engine organically forces a clear distinction between the *Shortest Route* (which cuts through high-risk pockets) and the *Safest Route* (which detours around them).
+- **Demo Mode Showcase**: Preloaded 1-click Demo Routes (e.g., AIIMS → Saket Metro) allow instant testing of route divergence.
+- **Context-Aware AI Insights**: The Gemini AI integration is fed real-time context (time of day, pocket density, nearby safe havens) to generate robust, calm, and highly accurate natural language safety explanations.
+
+---
+
 ## 💡 The Solution: Sakhi AI
 Sakhi AI turns the tide by making safety **quantifiable and predictable**. We use a proprietary **Safety Scoring Engine** that evaluates urban environments in real-time, helping users make informed decisions *before* a risk manifests.
 
@@ -36,8 +44,10 @@ Our core engine calculates high-fidelity safety scores (0-10) using:
 
 ### 🛣️ Smart Safe-Routing
 Navigation redefined for safety. Sakhi evaluates every segment of your journey:
-- **Segmented Risk Analysis**: Identifies green (safe), orange (moderate), and red (high-risk) zones along your path.
-- **Context-Aware Alternatives**: Suggests routes based on active street lighting and commercial activity rather than just the shortest distance.
+- **OSRM Integration**: Fetches real road geometries and multiple path alternatives via the open-source OSRM routing engine.
+- **Segmented Risk Analysis**: Identifies green (safe), orange (moderate), and red (high-risk) zones along your path. 
+- **Context-Aware Routing & Explanations**: Dynamically computes a weighted safety score (averaging the route with severe penalties for worst segments) and generates natural language explanations comparing route incidents (e.g., "This route avoids 2 poorly lit areas").
+- **Visual Danger Zones**: Unsafe clusters are highlighted on the map with glowing thermal layers to clearly communicate danger.
 
 ### 📢 Community Intelligence
 Empowerment through shared data. Users can report incidents (Harassment, Poor Lighting, Stalking) to alert others. This crowdsourced layer creates a living safety map that evolves with the city.
@@ -137,6 +147,3 @@ Sakhi AI is more than a project; it’s a commitment to making our cities walkab
 ---
 
 > **Sakhi AI: Your Companion in Every Step.** 🌙🛡️
-=======
-# Sakhi-AI-
->>>>>>> d0cdab01982ed9d5b91b99f4dee9445d7579a203

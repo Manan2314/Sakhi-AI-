@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import MapView from "@/components/MapView";
 import { apiFetch, endpoints } from "@/lib/api";
-import { Layers, Filter, AlertTriangle, Shield, Flame, Car, Moon } from "lucide-react";
+import { Layers, Filter, AlertTriangle, Shield, Flame, Car, Moon, Sparkles, RefreshCcw } from "lucide-react";
 
 const layerDefinitions = [
   { id: "safe-zones", label: "Safe Locations", color: "#3b82f6", icon: Shield, type: "safe_place" },
@@ -14,6 +14,20 @@ export default function SafetyMap() {
   const [activeLayers, setActiveLayers] = useState(["safe-zones", "harassment", "unsafe_area", "poor_lighting"]);
   const [reportMarkers, setReportMarkers] = useState<any[]>([]);
   const [safePlaceMarkers, setSafePlaceMarkers] = useState<any[]>([]);
+  const [aiBriefing, setAiBriefing] = useState<string | null>(null);
+  const [loadingBriefing, setLoadingBriefing] = useState(false);
+
+  const fetchBriefing = useCallback(async () => {
+    setLoadingBriefing(true);
+    try {
+      const data = await apiFetch(endpoints.getAreaInsights(28.6139, 77.2090)); // Default center
+      setAiBriefing(data.briefing);
+    } catch (err) {
+      console.error("Failed to fetch area insights", err);
+    } finally {
+      setLoadingBriefing(false);
+    }
+  }, []);
 
   const fetchMarkers = useCallback(async () => {
     try {
@@ -66,6 +80,10 @@ export default function SafetyMap() {
     fetchMarkers();
   }, [fetchMarkers]);
 
+  useEffect(() => {
+    fetchBriefing();
+  }, [fetchBriefing]);
+
   const toggleLayer = (id: string) => {
     setActiveLayers((prev) =>
       prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]
@@ -81,13 +99,36 @@ export default function SafetyMap() {
         safePlaceMarkers={safePlaceMarkers}
       />
 
-      {/* Header */}
-      <div className="absolute top-4 left-4 z-10 bg-card/95 backdrop-blur-sm rounded-2xl px-4 py-3 shadow-md border border-border">
-        <div className="flex items-center gap-2 mb-0.5">
-          <Layers className="w-4 h-4 text-primary" />
-          <h2 className="text-[14px] font-semibold text-foreground">Safety Intelligence Map</h2>
+      <div className="absolute top-4 left-4 z-10 flex flex-col gap-3">
+        <div className="bg-card/95 backdrop-blur-sm rounded-2xl px-4 py-3 shadow-md border border-border">
+          <div className="flex items-center gap-2 mb-0.5">
+            <Layers className="w-4 h-4 text-primary" />
+            <h2 className="text-[14px] font-semibold text-foreground">Safety Intelligence Map</h2>
+          </div>
+          <p className="text-[11px] text-muted-foreground">Live community & government data</p>
         </div>
-        <p className="text-[11px] text-muted-foreground">Live community & government data</p>
+
+        {/* AI Briefing Panel */}
+        <div className="bg-card/95 backdrop-blur-sm rounded-2xl p-3 shadow-md border border-border w-[280px]">
+          <div className="flex items-center justify-between mb-2 pb-1 border-b border-border">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+              <span className="text-[11px] font-semibold text-foreground uppercase tracking-wider">AI Area Insights</span>
+            </div>
+            <button onClick={fetchBriefing} disabled={loadingBriefing} className="p-1 hover:bg-muted rounded-full transition-colors">
+              <RefreshCcw className={`w-3 h-3 text-muted-foreground ${loadingBriefing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+          <div className="text-[12px] text-muted-foreground leading-snug min-h-[40px] flex items-center">
+            {loadingBriefing ? (
+              <span className="animate-pulse">Analyzing local safety patterns...</span>
+            ) : aiBriefing ? (
+              <span className="text-foreground/90">{aiBriefing}</span>
+            ) : (
+              <span>Insights unavailable.</span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Layer controls */}

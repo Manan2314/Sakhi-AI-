@@ -47,3 +47,23 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Python (FastAPI backend)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+.env.*
+
+# Sakhi AI specific
+artifacts/
+lib/
+.stitch/
+
+# Logs
+*.log
+
+# OS junk (extra safety)
+desktop.ini

@@ -9,6 +9,8 @@ import models
 from api.safety import router as safety_router
 from api.guardian import router as guardian_router
 from api.users import router as users_router
+from api.insights import router as insights_router
+from api.preferences import router as preferences_router
 
 # Create all tables on startup
 Base.metadata.create_all(bind=engine)
@@ -24,7 +26,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "http://127.0.0.1:5173"
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -34,6 +38,8 @@ app.add_middleware(
 app.include_router(safety_router)
 app.include_router(guardian_router)
 app.include_router(users_router)
+app.include_router(insights_router)
+app.include_router(preferences_router)
 
 
 
