@@ -37,7 +37,7 @@ export default function EmergencyCenter() {
 
   const locationText = geo.position
     ? geo.permissionDenied
-      ? "New Delhi, India (Default)"
+      ? "Location permission denied — using fallback"
       : `${geo.position[0].toFixed(5)}°N, ${geo.position[1].toFixed(5)}°E`
     : "Locating...";
 

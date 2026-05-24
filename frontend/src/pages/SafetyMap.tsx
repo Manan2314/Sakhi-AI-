@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import MapView from "@/components/MapView";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import { apiFetch, endpoints } from "@/lib/api";
 import { Layers, Filter, AlertTriangle, Shield, Flame, Car, Moon, Sparkles, RefreshCcw } from "lucide-react";
 
@@ -10,7 +11,10 @@ const layerDefinitions = [
   { id: "poor_lighting", label: "Poor Lighting", color: "#f59e0b", icon: Moon, type: "report" },
 ];
 
+const DEFAULT_CENTER: [number, number] = [28.6139, 77.2090];
+
 export default function SafetyMap() {
+  const geo = useGeolocation(true);
   const [activeLayers, setActiveLayers] = useState(["safe-zones", "harassment", "unsafe_area", "poor_lighting"]);
   const [reportMarkers, setReportMarkers] = useState<any[]>([]);
   const [safePlaceMarkers, setSafePlaceMarkers] = useState<any[]>([]);
@@ -19,15 +23,16 @@ export default function SafetyMap() {
 
   const fetchBriefing = useCallback(async () => {
     setLoadingBriefing(true);
+    const pos = geo.position || DEFAULT_CENTER;
     try {
-      const data = await apiFetch(endpoints.getAreaInsights(28.6139, 77.2090)); // Default center
+      const data = await apiFetch(endpoints.getAreaInsights(pos[0], pos[1]));
       setAiBriefing(data.briefing);
     } catch (err) {
       console.error("Failed to fetch area insights", err);
     } finally {
       setLoadingBriefing(false);
     }
-  }, []);
+  }, [geo.position]);
 
   const fetchMarkers = useCallback(async () => {
     try {
@@ -59,8 +64,8 @@ export default function SafetyMap() {
 
       // 2. Fetch Safe Places if active
       if (activeLayers.includes("safe-zones")) {
-        // Default to a central Delhi point for global view, or empty if too broad
-        const data = await apiFetch(endpoints.getSafePlaces(28.6139, 77.2090)); // Central Delhi
+        const pos = geo.position || DEFAULT_CENTER;
+        const data = await apiFetch(endpoints.getSafePlaces(pos[0], pos[1]));
         setSafePlaceMarkers(data.map((p: any) => ({
           id: p.id.toString(),
           pos: [p.latitude, p.longitude],
@@ -74,7 +79,7 @@ export default function SafetyMap() {
     } catch (err) {
       console.error("SafetyMap failed to fetch live data:", err);
     }
-  }, [activeLayers]);
+  }, [activeLayers, geo.position]);
 
   useEffect(() => {
     fetchMarkers();
@@ -95,6 +100,8 @@ export default function SafetyMap() {
       <MapView 
         className="absolute inset-0 w-full h-full" 
         zoom={12} 
+        center={geo.position || DEFAULT_CENTER}
+        userLocation={geo.position}
         reportMarkers={reportMarkers}
         safePlaceMarkers={safePlaceMarkers}
       />

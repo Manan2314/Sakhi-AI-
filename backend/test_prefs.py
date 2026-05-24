@@ -1,23 +1,30 @@
-from dotenv import load_dotenv
-load_dotenv() # Load from backend/.env BEFORE importing
-
-import asyncio
-import time
-from api.preferences import extract_preferences
+import google.generativeai as genai
 import os
+import json
+import re
 
-async def test():
-    req = {"text": "I dislike isolated roads and dark streets"}
-    
-    start1 = time.time()
-    res1 = await extract_preferences(req)
-    end1 = time.time()
-    
-    start2 = time.time()
-    res2 = await extract_preferences(req)
-    end2 = time.time()
-    
-    print(f"Call 1 ({end1-start1:.4f}s):", res1)
-    print(f"Call 2 ({end2-start2:.4f}s):", res2)
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+model = genai.GenerativeModel('gemini-1.5-flash')
 
-asyncio.run(test())
+text = "It is too dark and isolated"
+prompt = f"""
+Extract safety preferences from the following user text.
+You must ONLY output a strict JSON object with a single key "preferences" containing a list of strings.
+Do NOT output explanations. Do NOT use markdown formatting (no ```json). Do NOT include any extra keys.
+
+Only use the following allowed categories:
+['poor_lighting', 'harassment', 'unsafe_area', 'isolated_areas', 'crowded_roads_preferred', 'public_transport_nearby']
+
+Text: "{text}"
+"""
+response = model.generate_content(prompt, request_options={"timeout": 5.0})
+print("Response text:")
+print(response.text)
+output = response.text.strip()
+output = re.sub(r'^```json', '', output)
+output = re.sub(r'```$', '', output).strip()
+try:
+    parsed = json.loads(output)
+    print("Parsed:", parsed)
+except Exception as e:
+    print("Error:", e)

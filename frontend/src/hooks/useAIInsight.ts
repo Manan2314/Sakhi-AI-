@@ -22,7 +22,7 @@ function getAreaName(pos: [number, number]): string {
       return area.name;
     }
   }
-  return "Delhi";
+  return "your location";
 }
 
 function getTimeOfDay(): string {
@@ -81,7 +81,7 @@ export function useAIInsight(
       }
     } catch {
       setInsight({
-        insight: `Stay aware of your surroundings in Delhi. Keep emergency contacts ready and stay in well-lit areas during the ${getTimeOfDay()}.`,
+        insight: `Stay aware of your surroundings. Keep emergency contacts ready and stay in well-lit areas during the ${getTimeOfDay()}.`,
         tips: [
           "Stay in well-lit, crowded areas",
           "Keep phone charged — call 112 if needed",

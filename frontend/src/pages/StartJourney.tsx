@@ -2,9 +2,11 @@ import { useState, useMemo } from "react";
 import MapView from "@/components/MapView";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { useRouteAnalysis } from "@/hooks/useRouteAnalysis";
-import { MapPin, Navigation2, Shield, X, Locate, Loader2, CheckCircle2, AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
+import { MapPin, Navigation2, Shield, X, Locate, Loader2, CheckCircle2, AlertTriangle, ArrowRight, Sparkles, Send } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { apiFetch, endpoints } from "@/lib/api";
+
+const DEFAULT_CENTER: [number, number] = [28.6139, 77.2090];
 
 // Minimal static destinations for search simulation (backend alignment)
 const DESTINATIONS = [
@@ -57,7 +59,7 @@ export default function StartJourney() {
     }
   };
 
-  const origin = demoOrigin ?? geo.position ?? [28.6139, 77.2090];
+  const origin = demoOrigin ?? geo.position ?? DEFAULT_CENTER;
 
   const suggestions = useMemo(() => {
     if (!query || query.length < 2) return [];
@@ -110,10 +112,12 @@ export default function StartJourney() {
 
   return (
     <div className="relative w-full h-full">
-      {/* Demo Mode Banner */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 bg-amber-500/95 text-white text-[11px] px-3.5 py-1.5 rounded-full shadow-md font-semibold whitespace-nowrap tracking-wide">
-        Currently optimized using seeded Delhi safety intelligence data.
-      </div>
+      {/* Demo/Fallback Mode Banner */}
+      {(!geo.position || geo.permissionDenied) && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 bg-amber-500/95 text-white text-[11px] px-3.5 py-1.5 rounded-full shadow-md font-semibold whitespace-nowrap tracking-wide">
+          Using baseline defaults. Enable GPS for live local safety intelligence.
+        </div>
+      )}
       
       <MapView
         className="absolute inset-0 w-full h-full"
@@ -169,34 +173,47 @@ export default function StartJourney() {
             </div>
 
             {/* AI Preferences Input */}
-            <div className="mt-3 bg-muted/30 rounded-xl p-3 border border-border/50 relative">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
-                  What makes you feel unsafe?
+            <div className="mt-3 bg-muted/30 rounded-xl p-3 border border-border/50">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  AI Emotional Safety Insight
                 </span>
+              </div>
+              <div className="relative flex items-center bg-background border border-border rounded-xl px-3 py-2 focus-within:border-primary/40 transition-all">
+                <textarea 
+                  value={prefText}
+                  onChange={(e) => setPrefText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleExtract();
+                    }
+                  }}
+                  onBlur={handleExtract}
+                  placeholder="Describe your safety concerns (e.g., avoid dark/isolated roads)..."
+                  className="flex-1 bg-transparent text-[12px] text-foreground outline-none resize-none placeholder:text-muted-foreground/60 h-[36px] pr-8 leading-snug"
+                />
                 <button 
                   onClick={handleExtract}
                   disabled={extracting || !prefText.trim()}
-                  className="w-6 h-6 rounded-full flex items-center justify-center bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                  className="absolute right-2 bottom-2 w-7 h-7 rounded-lg flex items-center justify-center bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-30 disabled:bg-muted disabled:text-muted-foreground transition-all cursor-pointer"
+                  title="Send to AI Insight"
                 >
-                  {extracting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  {extracting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                 </button>
               </div>
-              <textarea 
-                value={prefText}
-                onChange={(e) => setPrefText(e.target.value)}
-                onBlur={handleExtract}
-                placeholder="e.g., I avoid dark and isolated roads..."
-                className="w-full bg-transparent text-[12px] text-foreground outline-none resize-none placeholder:text-muted-foreground/60 h-[36px]"
-              />
               
               {extractedPrefs.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {extractedPrefs.map(pref => (
-                    <div key={pref} className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[9px] font-semibold uppercase tracking-wider">
-                      {pref.replace("_", " ")}
-                    </div>
-                  ))}
+                <div className="mt-2.5">
+                  <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Extracted Preferences:</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {extractedPrefs.map(pref => (
+                      <div key={pref} className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[9px] font-bold uppercase tracking-wider">
+                        {pref.replace("_", " ")}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

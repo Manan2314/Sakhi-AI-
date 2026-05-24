@@ -1,5 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv, find_dotenv
+import os
+
+# Try to find and load .env file from anywhere up the tree
+load_dotenv(find_dotenv())
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional

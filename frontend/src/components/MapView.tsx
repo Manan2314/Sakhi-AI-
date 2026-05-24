@@ -49,7 +49,7 @@ interface MapViewProps {
   fitToRoute?: boolean;
 }
 
-const DELHI_CENTER: [number, number] = [28.6139, 77.2090];
+const DEFAULT_CENTER: [number, number] = [28.6139, 77.2090];
 
 const PLACE_ICONS: Record<string, { color: string; glyph: string }> = {
   police: { color: "#3b82f6", glyph: "👮" }, // blue
@@ -95,7 +95,7 @@ function makeUserIcon() {
 }
 
 export default function MapView({
-  center = DELHI_CENTER,
+  center = DEFAULT_CENTER,
   zoom = 13,
   className = "",
   userLocation = null,

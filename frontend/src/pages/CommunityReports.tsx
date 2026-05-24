@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import MapView, { type ReportMarker } from "@/components/MapView";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { apiFetch, endpoints } from "@/lib/api";
 import {
   MessageSquareWarning,
   Plus,
@@ -46,22 +47,19 @@ export default function CommunityReports() {
 
   const fetchReports = useCallback(async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/reports");
-      if (res.ok) {
-        const data = await res.json();
-        const formatted = data.map((r: any) => ({
-          id: r.id,
-          category: r.type,
-          title: r.type.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-          location: `${r.latitude.toFixed(2)}, ${r.longitude.toFixed(2)}`,
-          time: new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          votes: 0,
-          verified: false,
-          desc: r.description || "Community report submitted.",
-          pos: [r.latitude, r.longitude] as [number, number],
-        }));
-        setReports(formatted);
-      }
+      const data = await apiFetch(endpoints.getReports());
+      const formatted = data.map((r: any) => ({
+        id: r.id,
+        category: r.type,
+        title: r.type.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+        location: `${r.latitude.toFixed(2)}, ${r.longitude.toFixed(2)}`,
+        time: new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        votes: 0,
+        verified: false,
+        desc: r.description || "Community report submitted.",
+        pos: [r.latitude, r.longitude] as [number, number],
+      }));
+      setReports(formatted);
     } catch (err) {
       console.error("Failed to fetch reports:", err);
     } finally {
@@ -101,9 +99,8 @@ export default function CommunityReports() {
     const pin = pendingPin ?? geo.position ?? [28.6139, 77.2090];
     
     try {
-      const res = await fetch("http://127.0.0.1:8000/reports", {
+      await apiFetch(endpoints.getReports(), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: newCategory,
           latitude: pin[0],
@@ -112,12 +109,10 @@ export default function CommunityReports() {
         }),
       });
 
-      if (res.ok) {
-        fetchReports();
-        cancelForm();
-        setJustSubmitted(true);
-        setTimeout(() => setJustSubmitted(false), 3000);
-      }
+      fetchReports();
+      cancelForm();
+      setJustSubmitted(true);
+      setTimeout(() => setJustSubmitted(false), 3000);
     } catch (err) {
       console.error("Failed to submit report:", err);
     }

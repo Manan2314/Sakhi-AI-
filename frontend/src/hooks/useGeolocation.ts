@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-const DELHI_FALLBACK: [number, number] = [28.6329, 77.2195];
+const DEFAULT_FALLBACK: [number, number] = [28.6329, 77.2195];
 
 export interface GeolocationState {
   position: [number, number] | null;
@@ -23,7 +23,7 @@ export function useGeolocation(autoStart = true) {
 
   const start = useCallback(() => {
     if (!navigator.geolocation) {
-      setState((s) => ({ ...s, position: DELHI_FALLBACK, loading: false, error: "Geolocation not supported" }));
+      setState((s) => ({ ...s, position: DEFAULT_FALLBACK, loading: false, error: "Geolocation not supported" }));
       return;
     }
 
@@ -42,10 +42,10 @@ export function useGeolocation(autoStart = true) {
       (err) => {
         const denied = err.code === err.PERMISSION_DENIED;
         setState({
-          position: DELHI_FALLBACK,
+          position: DEFAULT_FALLBACK,
           accuracy: null,
           loading: false,
-          error: denied ? "Location permission denied — using Delhi default" : err.message,
+          error: denied ? "Location permission denied — using fallback location" : err.message,
           permissionDenied: denied,
         });
       },
